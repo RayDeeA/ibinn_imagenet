@@ -1,0 +1,7 @@
+click
+numpy
+scipy
+h5py
+tqdm
+torch
+torchvision
