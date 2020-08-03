@@ -5,12 +5,9 @@ from os.path import join
 import click
 
 import numpy as np
-# from tqdm import tqdm
 import torch.optim
 
 from ..data.imagenet import Imagenet
-
-# import eval
 
 from ..model.backbones.invertible_resnet import InvertibleResNet
 from ..model.heads.invertible_multiclass_classifier import InvertibleMulticlassClassifier
@@ -128,10 +125,9 @@ def train(**args):
 
     if finetune_mu:
         last_lr = float(args['training_lr']) * 10 ** (-(max(0,float(args['checkpoints_cooling_step']))))
-        current_lr = float(args['training_lr']) * 10 ** (-(float(args['checkpoints_cooling_step'])))
     else:
         last_lr = float(args['training_lr']) * 10 ** (-(max(0,float(args['checkpoints_cooling_step'])-1)))
-        current_lr = float(args['training_lr']) * 10 ** (-(float(args['checkpoints_cooling_step'])))
+    current_lr = float(args['training_lr']) * 10 ** (-(float(args['checkpoints_cooling_step'])))
 
     last_lr = truncate(last_lr)
     current_lr = truncate(current_lr)
@@ -144,7 +140,7 @@ def train(**args):
             beta_nll, beta_cat_ce = 0., 1.
 
     interval_log = int(args['checkpoints_interval_log'])
-    interval_checkpoint = int(args['checkpoints_interval_checkpoint'])
+    # interval_checkpoint = int(args['checkpoints_interval_checkpoint'])
 
     save_on_crash = args['checkpoints_checkpoint_when_crash']
     out_folder = args['checkpoints_out_folder']
@@ -211,7 +207,7 @@ def train(**args):
 
     output_fmt =        '{:15.1f}      {:04d}/{:04d}      {:04d}/{:04d}      {:1.5f}' + '{:15.5f}' * (len(plot_columns) - 4)
     live_output_fmt =   '{:15.1f}      {:04d}/{:04d}      {:04d}/{:04d}      {:1.5f}' + '{:15.5f}' * len(train_loss_names) + '\r'
-    val_output_fmt = '{:15.5f}' * len(val_loss_names)
+    val_output_fmt =    '{:15.5f}' * len(val_loss_names)
 
     if resume:
         if (not beta == "infinity") and beta < 0.5:

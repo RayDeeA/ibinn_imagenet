@@ -8,6 +8,7 @@ from . import accuracy
 def process_evaluation(args, model, data, evaluation):
     model.eval()
 
+    # todo Other evaluation methods will be made available soon
     if 'accuracy' in evaluation:
 
         print("ACC 1 CROP")
@@ -56,10 +57,6 @@ def process_evaluation(args, model, data, evaluation):
 def eval(**args):
 
     data = Imagenet(args['data_root_folder_train'], args['data_root_folder_val'], int(args['data_batch_size']))
-
-    #args['data_dims'] = repr((3, data.img_crop_size[0], data.img_crop_size[1]))
-    #args['data_n_classes'] = repr(data.n_classes)
-    #args['model_soft_permutaion'] = False
 
     if 'feed_forward' in args['evaluation']:
         print("Loading Feed Forward Model")

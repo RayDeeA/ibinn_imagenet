@@ -1,10 +1,9 @@
-from math import exp
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from scipy.stats import special_ortho_group
+
+from math import exp
 
 class GlowCouplingBlock(nn.Module):
 
@@ -25,7 +24,6 @@ class GlowCouplingBlock(nn.Module):
         self.min_s = exp(-clamp)
 
         self.conditional = False
-        condition_length = 0
 
         self.s1 = subnet_constructor(self.split_len1, 2 * self.split_len2)
         self.s2 = subnet_constructor(self.split_len2, 2 * self.split_len1)
@@ -74,11 +72,15 @@ class GlowCouplingBlock(nn.Module):
 
 class AIO_GlowCouplingBlock(GlowCouplingBlock):
 
-    def __init__(self, dims_in, dims_c=[], subnet_constructor=None,
-                                           clamp=2.,
-                                           act_norm=1.,
-                                           act_norm_type='SOFTPLUS',
-                                           permute_soft=False):
+    def __init__(self,
+        dims_in,
+        dims_c=[],
+        subnet_constructor=None,
+        clamp=2.,
+        act_norm=1.,
+        act_norm_type='SOFTPLUS',
+        permute_soft=False
+    ):
 
         super().__init__(dims_in, dims_c=dims_c, subnet_constructor=subnet_constructor, clamp=clamp)
 
@@ -109,10 +111,8 @@ class AIO_GlowCouplingBlock(GlowCouplingBlock):
                 w[i,j] = 1.
         w_inv = w.T
 
-        self.w = nn.Parameter(torch.FloatTensor(w).view(channels, channels, 1, 1),
-                              requires_grad=False)
-        self.w_inv = nn.Parameter(torch.FloatTensor(w_inv).view(channels, channels, 1, 1),
-                              requires_grad=False)
+        self.w = nn.Parameter(torch.FloatTensor(w).view(channels, channels, 1, 1), requires_grad=False)
+        self.w_inv = nn.Parameter(torch.FloatTensor(w_inv).view(channels, channels, 1, 1), requires_grad=False)
 
     def permute(self, x, rev=False):
         scale = self.actnorm_activation( self.act_norm)
@@ -149,11 +149,13 @@ if __name__ == '__main__':
         return layer
 
     actnorm = 5.26
-    layer = AIO_GlowCouplingBlock([(c, N, N)],
-                                  subnet_constructor=constr,
-                                  clamp=2.,
-                                  act_norm=actnorm,
-                                  permute_soft=True)
+    layer = AIO_GlowCouplingBlock(
+        [(c, N, N)],
+        subnet_constructor=constr,
+        clamp=2.,
+        act_norm=actnorm,
+        permute_soft=True
+    )
 
     transf = layer([x])
     jac = layer.jacobian([x])

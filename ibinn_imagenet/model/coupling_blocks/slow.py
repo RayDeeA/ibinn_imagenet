@@ -1,6 +1,3 @@
-import pdb
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,15 +6,17 @@ from scipy.stats import special_ortho_group
 class AIO_SlowCouplingBlock(nn.Module):
     ''' This elegant coupling block was invented by Jakob Kruse '''
 
-    def __init__(self, dims_in, dims_c=[],
-                 subnet_constructor=None,
-                 clamp=2.,
-                 gin_block=False,
-                 act_norm=1.,
-                 act_norm_type='SOFTPLUS',
-                 permute_soft=False,
-                 learned_householder_permutation=0,
-                 welling_permutation=False):
+    def __init__(self,
+        dims_in, dims_c=[],
+        subnet_constructor=None,
+        clamp=2.,
+        gin_block=False,
+        act_norm=1.,
+        act_norm_type='SOFTPLUS',
+        permute_soft=False,
+        learned_householder_permutation=0,
+        welling_permutation=False
+    ):
 
         super().__init__()
 
@@ -52,7 +51,6 @@ class AIO_SlowCouplingBlock(nn.Module):
         self.act_norm = nn.Parameter(torch.ones(1, self.in_channels, 1, 1) * float(act_norm))
         self.act_offset = nn.Parameter(torch.zeros(1, self.in_channels, 1, 1))
 
-
         if permute_soft:
             w = special_ortho_group.rvs(channels)
         else:
@@ -66,13 +64,10 @@ class AIO_SlowCouplingBlock(nn.Module):
             self.w_inv = None
             self.w_0 = nn.Parameter(torch.FloatTensor(w), requires_grad=False)
         else:
-            self.w = nn.Parameter(torch.FloatTensor(w).view(channels, channels, 1, 1),
-                                  requires_grad=False)
-            self.w_inv = nn.Parameter(torch.FloatTensor(w.T).view(channels, channels, 1, 1),
-                                  requires_grad=False)
+            self.w = nn.Parameter(torch.FloatTensor(w).view(channels, channels, 1, 1), requires_grad=False)
+            self.w_inv = nn.Parameter(torch.FloatTensor(w.T).view(channels, channels, 1, 1), requires_grad=False)
 
         self.conditional = False
-        condition_length = 0
 
         self.s = subnet_constructor(self.split_len1, 2 * self.split_len2)
         self.last_jac = None
@@ -169,14 +164,16 @@ if __name__ == '__main__':
         return layer
 
     actnorm = 1.25
-    layer = AIO_SlowCouplingBlock([(c, N, N)],
-                                  subnet_constructor=constr,
-                                  clamp=2.,
-                                  gin_block=False,
-                                  act_norm=actnorm,
-                                  permute_soft=True,
-                                  learned_householder_permutation=3,
-                                  welling_permutation=False)
+    layer = AIO_SlowCouplingBlock(
+        [(c, N, N)],
+        subnet_constructor=constr,
+        clamp=2.,
+        gin_block=False,
+        act_norm=actnorm,
+        permute_soft=True,
+        learned_householder_permutation=3,
+        welling_permutation=False
+    )
 
     transf = layer([x])
     jac = layer.jacobian([x])

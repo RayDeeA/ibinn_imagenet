@@ -6,7 +6,18 @@ import FrEIA.framework as Ff
 
 from .. import InvertibleArchitecture
 
-import time
+__all__ = ['beta_0', 'beta_1', 'beta_2', 'beta_4', 'beta_8', 'beta_16', 'beta_32', 'beta_inf']
+
+model_urls = {
+    'beta_0': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_0.avg.pt&dl=1',
+    'beta_1': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_1.avg.pt&dl=1',
+    'beta_2': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_2.avg.pt&dl=1',
+    'beta_4': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_4.avg.pt&dl=1',
+    'beta_8': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_8.avg.pt&dl=1',
+    'beta_16': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_16.avg.pt&dl=1',
+    'beta_32': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_32.avg.pt&dl=1',
+    'beta_inf': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_inf.avg.pt&dl=1',
+}
 
 class InvertibleImagenetClassifier(InvertibleArchitecture):
 
@@ -48,23 +59,30 @@ class InvertibleImagenetClassifier(InvertibleArchitecture):
         self.model_parameters = list(filter(lambda p: p.requires_grad, self.model.parameters()))
 
         self.finetune_mu = finetune_mu
-        if finetune_mu:
-            self.optimizer_params = [{'params': self.model_parameters, 'lr': 0 * self.lr, 'weight_decay':0.}]
-        else:
-            self.optimizer_params = [{'params': self.model_parameters, 'lr': 1 * self.lr, 'weight_decay':0.}]
+        self.optimizer_params = [{
+            'params': self.model_parameters,
+            'lr': 0 * self.lr if finetune_mu else 1 * self.lr,
+            'weight_decay':0.}
+        ]
 
         if self.train_mu:
-            self.optimizer_params.append({'params': [self.mu_fc],
-                                     'lr': 1. * self.lr,
-                                     'weight_decay': 0.})
+            self.optimizer_params.append({
+                'params': [self.mu_fc],
+                'lr': 1. * self.lr,
+                'weight_decay': 0.
+            })
 
-            self.optimizer_params.append({'params': [self.mu_m, self.mu_t] if self.mu_low_rank_k > 0 else [self.mu_conv],
-                                     'lr': 1. * self.lr,
-                                     'weight_decay': 0.})
+            self.optimizer_params.append({
+                'params': [self.mu_m, self.mu_t] if self.mu_low_rank_k > 0 else [self.mu_conv],
+                'lr': 1. * self.lr,
+                'weight_decay': 0.
+            })
         if self.train_phi:
-            self.optimizer_params.append({'params': [self.phi],
-                                     'lr': 1. * self.lr,
-                                     'weight_decay': 0.})
+            self.optimizer_params.append({
+                'params': [self.phi],
+                'lr': 1. * self.lr,
+                'weight_decay': 0.
+            })
 
         self.optimizer = torch.optim.SGD(self.optimizer_params, self.lr, momentum=0.9, weight_decay=1e-5)
 
@@ -100,9 +118,9 @@ class InvertibleImagenetClassifier(InvertibleArchitecture):
         self.mu_conv = torch.mm(self.mu_t, self.mu_m).unsqueeze(0)
 
     def cluster_distances(self, z, mu):
-        z_i_z_i = torch.sum(z**2, dim=1, keepdim=True) # batchsize x 1
-        mu_j_mu_j = torch.sum(mu**2, dim=2)       # 1 x n_classes
-        z_i_mu_j = torch.mm(z, mu.squeeze().t())  # batchsize x n_classes
+        z_i_z_i = torch.sum(z**2, dim=1, keepdim=True)  # batchsize x 1
+        mu_j_mu_j = torch.sum(mu**2, dim=2)             # 1 x n_classes
+        z_i_mu_j = torch.mm(z, mu.squeeze().t())        # batchsize x n_classes
 
         return -2 * z_i_mu_j + z_i_z_i + mu_j_mu_j
 
@@ -177,23 +195,84 @@ class InvertibleImagenetClassifier(InvertibleArchitecture):
                         'mu_conv': self.mu_conv,
                         'opt': self.optimizer.state_dict()}, fname)
 
-
-    def load(self, fname):
-        data = torch.load(fname)
+    def init_from_data(self, data):
         self.model.load_state_dict(data['inn'], strict=True)
         self.mu_fc.data.copy_(data['mu'].data)
 
-        if self.mu_low_rank_k > 0:
+        if hasattr(self, "mu_low_rank_k") and self.mu_low_rank_k > 0:
             self.mu_t.data.copy_(data['mu_t'].data)
             self.mu_m.data.copy_(data['mu_m'].data)
+            self.calc_mu_conv()
         else:
             self.mu_conv.data.copy_(data['mu_conv'].data)
 
         try:
             self.optimizer.load_state_dict(data['opt'])
         except:
-            print('loading the optimizer went wrong, skipping')
+            print('Not loading the optimizer')
 
-        self.calc_mu_conv()
+    def load(self, fname):
+        data = torch.load(fname)
+        self.init_from_data(data)
 
+from torch.hub import load_state_dict_from_url
+from ..backbones.invertible_resnet import InvertibleResNet
+from ..heads.invertible_multiclass_classifier import InvertibleMulticlassClassifier
 
+def _trustworthy_gc(beta, layers, pretrained, progress, pretrained_model_path, **kwargs):
+
+    beta_str = "beta_" + str(beta)
+
+    # Loading and initializing the models made available under:
+    # https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/
+
+    backbone = InvertibleResNet(
+        64,
+        clamp=0.7,
+        act_norm=0.7,
+        blocks=layers,
+        strides=[1, 2, 2, 2],
+        dilations=[1, 1, 1, 1],
+        permute_soft = False
+    )
+    head = InvertibleMulticlassClassifier(
+            1024,
+            3072,
+            224*224*3,
+            clamp=0.7,
+            act_norm=0.7,
+            permute_soft=False
+    )
+
+    model = InvertibleImagenetClassifier(0.0, 0.0, 0.0, 128, [3,224,224], 1000, 3072, 224*224*3, backbone, head, finetune_mu=False, **kwargs)
+    if pretrained:
+        if pretrained_model_path is None:
+            data = load_state_dict_from_url(model_urls[beta_str], progress=progress)
+            model.init_from_data(data)
+        else:
+            model.load(pretrained_model_path)
+    return model
+
+def trustworthy_gc_beta_0(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc(0, [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)
+
+def trustworthy_gc_beta_1(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc(1, [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)
+
+def trustworthy_gc_beta_2(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc(2, [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)
+
+def trustworthy_gc_beta_4(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc(4, [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)
+
+def trustworthy_gc_beta_8(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc(8, [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)
+
+def trustworthy_gc_beta_16(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc(16, [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)
+
+def trustworthy_gc_beta_32(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc(32, [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)
+
+def trustworthy_gc_beta_inf(pretrained=False, progress=True, pretrained_model_path=None, **kwargs):
+    return _trustworthy_gc('inf', [3, 4, 6, 3], pretrained, progress, pretrained_model_path, **kwargs)

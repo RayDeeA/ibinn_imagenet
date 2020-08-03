@@ -1,8 +1,4 @@
-import torch
 import torch.nn as nn
-from torch.nn.functional import conv2d, interpolate
-import torch.nn.functional as F
-import numpy as np
 
 import FrEIA.framework as Ff
 import FrEIA.modules as Fm
@@ -12,7 +8,6 @@ from .. import CouplingType
 
 from ..coupling_blocks.slow import AIO_SlowCouplingBlock
 from ..coupling_blocks.glow import AIO_GlowCouplingBlock
-from ..coupling_blocks.downsampling import AIO_DownsampleCouplingBlock
 
 from ...utils.dct_transform import DCTPooling2d
 
@@ -23,7 +18,7 @@ class InvertibleMulticlassClassifier(InvertibleArchitecture):
             fc_width,
             n_loss_dims_1d,
             n_total_dims_1d,
-            coupling_type=CouplingType.GLOW,
+            coupling_type=CouplingType.SLOW,
             clamp=1.,
             act_norm=0.25,
             act_norm_type='SOFTPLUS',

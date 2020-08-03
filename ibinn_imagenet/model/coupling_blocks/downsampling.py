@@ -1,18 +1,13 @@
-from math import exp
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from scipy.stats import special_ortho_group
 
-import numpy as np
+from math import exp
 
 class DownsampleCouplingBlock(nn.Module):
 
-    def __init__(self, dims_in, dims_c=[], subnet_constructor_strided=None,
-                                           subnet_constructor_low_res=None,
-                                           clamp=2.):
+    def __init__(self, dims_in, dims_c=[], subnet_constructor_strided=None, subnet_constructor_low_res=None, clamp=2.):
         super().__init__()
 
         channels = dims_in[0][0]
@@ -29,7 +24,6 @@ class DownsampleCouplingBlock(nn.Module):
         self.min_s = exp(-clamp)
 
         self.conditional = False
-        condition_length = 0
 
         self.s_hi = subnet_constructor_strided(self.split_len1, 8 * self.split_len2)
         self.s_lo = subnet_constructor_low_res(4 * self.split_len2, self.split_len1 * 8)
@@ -109,16 +103,24 @@ class DownsampleCouplingBlock(nn.Module):
 
 
 class AIO_DownsampleCouplingBlock(DownsampleCouplingBlock):
-    def __init__(self, dims_in, dims_c=[], subnet_constructor_strided=None,
-                                           subnet_constructor_low_res=None,
-                                           clamp=2.,
-                                           act_norm=1.,
-                                           act_norm_type='SOFTPLUS',
-                                           permute_soft=False):
+    def __init__(self,
+        dims_in,
+        dims_c=[],
+        subnet_constructor_strided=None,
+        subnet_constructor_low_res=None,
+        clamp=2.,
+        act_norm=1.,
+        act_norm_type='SOFTPLUS',
+        permute_soft=False
+    ):
 
-        super().__init__(dims_in, dims_c=[], subnet_constructor_strided=subnet_constructor_strided,
-                                             subnet_constructor_low_res=subnet_constructor_low_res,
-                                             clamp=clamp)
+        super().__init__(
+            dims_in,
+            dims_c=[],
+            subnet_constructor_strided=subnet_constructor_strided,
+            subnet_constructor_low_res=subnet_constructor_low_res,
+            clamp=clamp
+        )
         if act_norm_type == 'SIGMOID':
             act_norm = np.log(act_norm)
             self.actnorm_activation = (lambda a: 10 * torch.sigmoid(a - 2.))
@@ -146,10 +148,8 @@ class AIO_DownsampleCouplingBlock(DownsampleCouplingBlock):
                 w[i,j] = 1.
         w_inv = w.T
 
-        self.w = nn.Parameter(torch.FloatTensor(w).view(channels, channels, 1, 1),
-                              requires_grad=False)
-        self.w_inv = nn.Parameter(torch.FloatTensor(w_inv).view(channels, channels, 1, 1),
-                              requires_grad=False)
+        self.w = nn.Parameter(torch.FloatTensor(w).view(channels, channels, 1, 1), requires_grad=False)
+        self.w_inv = nn.Parameter(torch.FloatTensor(w_inv).view(channels, channels, 1, 1), requires_grad=False)
 
     def permute(self, x, rev=False):
         scale = self.actnorm_activation( self.act_norm)
@@ -183,12 +183,14 @@ if __name__ == '__main__':
     constr_stride = lambda c_in, c_out: torch.nn.Conv2d(c_in, c_out, 3, padding=1, stride=2)
 
     actnorm = 0.26
-    layer = AIO_DownsampleCouplingBlock([(c, N, N)],
-                 subnet_constructor_strided=constr_stride,
-                 subnet_constructor_low_res=constr,
-                 clamp=2.,
-                 act_norm=actnorm,
-                 permute_soft=True)
+    layer = AIO_DownsampleCouplingBlock(
+        [(c, N, N)],
+        subnet_constructor_strided=constr_stride,
+        subnet_constructor_low_res=constr,
+        clamp=2.,
+        act_norm=actnorm,
+        permute_soft=True
+    )
 
     transf = layer([x])
     jac = layer.jacobian([x])

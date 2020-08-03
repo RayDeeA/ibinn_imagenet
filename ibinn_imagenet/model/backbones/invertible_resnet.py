@@ -22,8 +22,8 @@ class InvertibleResNet(InvertibleArchitecture):
     def __init__(
             self,
             base_width,
-            coupling_type=CouplingType.GLOW,
-            block_type=BlockType.BASIC,
+            coupling_type=CouplingType.SLOW,
+            block_type=BlockType.BOTTLENECK,
             clamp=1.,
             act_norm=0.25,
             permute_soft=True,
@@ -150,7 +150,6 @@ class InvertibleResNet(InvertibleArchitecture):
         def _entry_flow_block(cin, cout):
 
             layers = nn.Sequential(
-                # Stride should be 2. We perform HaarDownsampling instead
                 nn.Conv2d(cin, self.base_width, kernel_size=7, stride=1, padding=3, dilation=1, bias=False),
                 self.BatchNorm(self.base_width, track_running_stats=True, momentum=0.05),
                 nn.ReLU(),
@@ -189,7 +188,7 @@ class InvertibleResNet(InvertibleArchitecture):
             return layers
 
         entry_flow = Ff.Node(input, self.downsampling_layer, dict(self.down_coupling_args, subnet_constructor_low_res=_entry_flow_block_strided_beta, subnet_constructor_strided=_entry_flow_block_strided), name='Strided entry_flow')
-        self.channels *= 4  # Downsampling by factor 2 leads to 4 time increase of channels
+        self.channels *= 4  # Each downsampling by a factor of 2 leads to a 4x increase of channels
         nodes.append(entry_flow)
 
         entry_flow_pool = Ff.Node(entry_flow, Fm.HaarDownsampling, {'order_by_wavelet': True, 'rebalance': 0.5}, name='downsampling entry_flow')
