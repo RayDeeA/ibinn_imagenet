@@ -23,7 +23,7 @@ class InvertibleMulticlassClassifier(InvertibleArchitecture):
             fc_width,
             n_loss_dims_1d,
             n_total_dims_1d,
-            coupling_type=CouplingType.GLOW,
+            coupling_type=CouplingType.SLOW,
             clamp=1.,
             act_norm=0.25,
             act_norm_type='SOFTPLUS',

@@ -53,13 +53,13 @@ xptl-schedule ibinn_imagenet/config/beta_0_0.ini sbatch ./SLURM_train_ibinn_imag
 ```
 in case you want to run your experiments on a cluster system utilizing a scheduler (e.g. SLURM, LSF)
 
-Evaluation for a learned model can be performed by executing the folling command. Note however that currently only "accuracy" and "feed_forward_accuracy" are supported values for field EVALUATION_METHOD
+Evaluation for a learned model can be performed by executing the folling command. Note however that currently only "accuracy" and "feed_forward_accuracy" are supported values for the field EVALUATION_METHOD.
 ```sh
-xptl-schedule ibinn_imagenet/config/beta_[VALUE].ini [QUEUEING_COMMAND] ./SLURM_eval_ibinn_imagenet_classifier.sh [PATH_TO_MODEL_FILE] [EVALUATION_METHOD]
+xptl-schedule ibinn_imagenet/config/beta_[VALUE].ini [QUEUEING_COMMAND] "./SLURM_eval_ibinn_imagenet_classifier.sh [PATH_TO_MODEL_FILE] [EVALUATION_METHOD]"
 ```
 e.g.:
 ```sh
-xptl-schedule ibinn_imagenet/config/beta_inf.ini "" ./SLURM_eval_ibinn_imagenet_classifier.sh /path/to/models/directory/beta_inf.avg accuracy
+xptl-schedule ibinn_imagenet/config/beta_inf.ini "" "./SLURM_eval_ibinn_imagenet_classifier.sh /path/to/models/directory/beta_inf.avg accuracy"
 ```
 The other evaluation methods described in the paper, will be made available soon.
 

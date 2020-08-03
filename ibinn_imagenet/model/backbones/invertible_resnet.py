@@ -22,8 +22,8 @@ class InvertibleResNet(InvertibleArchitecture):
     def __init__(
             self,
             base_width,
-            coupling_type=CouplingType.GLOW,
-            block_type=BlockType.BASIC,
+            coupling_type=CouplingType.SLOW,
+            block_type=BlockType.BOTTLENECK,
             clamp=1.,
             act_norm=0.25,
             permute_soft=True,
@@ -150,7 +150,6 @@ class InvertibleResNet(InvertibleArchitecture):
         def _entry_flow_block(cin, cout):
 
             layers = nn.Sequential(
-                # Stride should be 2. We perform HaarDownsampling instead
                 nn.Conv2d(cin, self.base_width, kernel_size=7, stride=1, padding=3, dilation=1, bias=False),
                 self.BatchNorm(self.base_width, track_running_stats=True, momentum=0.05),
                 nn.ReLU(),
