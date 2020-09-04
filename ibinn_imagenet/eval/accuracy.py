@@ -1,7 +1,5 @@
 import torch
 
-from torchvision.transforms import transforms as T
-
 import numpy as np
 
 def accuracy(model, data):

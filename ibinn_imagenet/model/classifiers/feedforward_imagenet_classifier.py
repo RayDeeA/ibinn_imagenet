@@ -47,7 +47,6 @@ class FeedForwardImagenetClassifier(nn.Module):
         losses['acc_tr'] = torch.tensor([0.0]).cuda()
 
         if y is not None:
-            cluster_distances = torch.zeros(y.shape).to(y.device)
             losses['nll_class_tr'] = 0.0
             losses['cat_ce_tr'] = - torch.sum((torch.log_softmax(z, dim=1)) * y, dim=1)
             losses['acc_tr'] = torch.mean((torch.argmax(y, dim=1) == torch.argmax(z, dim=1)).float())

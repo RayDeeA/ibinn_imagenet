@@ -1,8 +1,4 @@
-import torch
 import torch.nn as nn
-from torch.nn.functional import conv2d, interpolate
-import torch.nn.functional as F
-import numpy as np
 
 import FrEIA.framework as Ff
 import FrEIA.modules as Fm
@@ -12,7 +8,6 @@ from .. import CouplingType
 
 from ..coupling_blocks.slow import AIO_SlowCouplingBlock
 from ..coupling_blocks.glow import AIO_GlowCouplingBlock
-from ..coupling_blocks.downsampling import AIO_DownsampleCouplingBlock
 
 from ...utils.dct_transform import DCTPooling2d
 

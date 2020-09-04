@@ -188,7 +188,7 @@ class InvertibleResNet(InvertibleArchitecture):
             return layers
 
         entry_flow = Ff.Node(input, self.downsampling_layer, dict(self.down_coupling_args, subnet_constructor_low_res=_entry_flow_block_strided_beta, subnet_constructor_strided=_entry_flow_block_strided), name='Strided entry_flow')
-        self.channels *= 4  # Downsampling by factor 2 leads to 4 time increase of channels
+        self.channels *= 4  # Each downsampling by a factor of 2 leads to a 4x increase of channels
         nodes.append(entry_flow)
 
         entry_flow_pool = Ff.Node(entry_flow, Fm.HaarDownsampling, {'order_by_wavelet': True, 'rebalance': 0.5}, name='downsampling entry_flow')

@@ -30,7 +30,7 @@ class Imagenet():
         self.root_folder_train = root_folder_train
         self.root_folder_val = root_folder_val
 
-        self.val_fast_set_size = 2000 # Use 2000 randomly picked files for validation steps within an epoch
+        self.val_fast_set_size = 2000 # Use only 2000 randomly picked files for validation steps performed within epochs
 
         self.batch_size = batch_size
 
@@ -76,10 +76,10 @@ class Imagenet():
             T.Lambda(lambda crops: torch.stack([T.Normalize(self._mu_img, self._std_img)(crop) for crop in crops])),
         ]), target_transform=T.Compose([T.Lambda(self._class_to_one_hot)]))
 
-        self.train_loader =    torch.utils.data.DataLoader(self.train_data,    batch_size=100, shuffle=True,  num_workers=12, pin_memory=False, sampler=None)
-        self.val_loader_fast = torch.utils.data.DataLoader(self.val_data_fast, batch_size=10,             shuffle=False, num_workers=12, pin_memory=False, sampler=None)
-        self.val_loader =      torch.utils.data.DataLoader(self.val_data,      batch_size=100,             shuffle=True, num_workers=12, pin_memory=False, sampler=None)
-        self.val_loader_10_crop = torch.utils.data.DataLoader(self.val_data_10_crop, batch_size=10, shuffle=True, num_workers=12, pin_memory=False, sampler=None)
+        self.train_loader =         torch.utils.data.DataLoader(self.train_data, batch_size=100, shuffle=True, num_workers=12, pin_memory=False, sampler=None)
+        self.val_loader_fast =      torch.utils.data.DataLoader(self.val_data_fast, batch_size=10, shuffle=False, num_workers=12, pin_memory=False, sampler=None)
+        self.val_loader =           torch.utils.data.DataLoader(self.val_data, batch_size=100, shuffle=True, num_workers=12, pin_memory=False, sampler=None)
+        self.val_loader_10_crop =   torch.utils.data.DataLoader(self.val_data_10_crop, batch_size=10, shuffle=True, num_workers=12, pin_memory=False, sampler=None)
 
         self.unnormalize_im = UnNormalize(self._mu_img, self._std_img)
 
