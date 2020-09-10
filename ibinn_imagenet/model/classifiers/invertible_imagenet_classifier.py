@@ -8,16 +8,8 @@ from .. import InvertibleArchitecture
 
 __all__ = ['beta_0', 'beta_1', 'beta_2', 'beta_4', 'beta_8', 'beta_16', 'beta_32', 'beta_inf']
 
-model_urls = {
-    'beta_0': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_0.avg.pt&dl=1',
-    'beta_1': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_1.avg.pt&dl=1',
-    'beta_2': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_2.avg.pt&dl=1',
-    'beta_4': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_4.avg.pt&dl=1',
-    'beta_8': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_8.avg.pt&dl=1',
-    'beta_16': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_16.avg.pt&dl=1',
-    'beta_32': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_32.avg.pt&dl=1',
-    'beta_inf': 'https://heibox.uni-heidelberg.de/d/e7b5ba0d30f24cdca416/files/?p=%2Fbeta_inf.avg.pt&dl=1',
-}
+model_base_url = 'https://heibox.uni-heidelberg.de/seafhttp/files/6f91503d-7459-4080-b10a-e979f8b3d20f/'
+model_urls = {b : f'{model_base_url}{b}.avg.pt' for b in __all__}
 
 class InvertibleImagenetClassifier(InvertibleArchitecture):
 
