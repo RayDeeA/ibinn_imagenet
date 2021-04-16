@@ -20,10 +20,12 @@ python3 -m venv .
 source bin/activate
 pip install -r requirements.txt
 ```
-Clone and install FrEIA in editable mode:
+Clone and install FrEIA 0.2 (**Note:** the newest version is currently incompatible):
 ```sh
-git clone git@github.com:VLL-HD/FrEIA.git
-pip install -e FrEIA
+git clone https://github.com/VLL-HD/FrEIA.git
+cd FrEIA
+git checkout v0.2
+python setup.py develop
 ```
 In this way, any changes made to FrEIA are reflected immediately without reinstallation of the package.
 
